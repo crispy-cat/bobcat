@@ -1,0 +1,10 @@
+commands.push(new Command({
+	names:		[],
+	args:		[],
+	accessLevel:AccessLevel.,
+	description:"",
+	categories:	[],
+	func:		async (args: string[], msg: Message): Promise<void> => {
+
+	}
+}));

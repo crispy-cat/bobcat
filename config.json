@@ -1,0 +1,37 @@
+{
+	"bobcat": {
+		"name":		"Bobcat Alpha",
+		"formats": {
+			"datetime": "YYYY-MM-DD HH:mm:ss"
+		},
+		"prefix": "$",
+		"accesslevels": {
+			"bot_owner":	[
+				"01G4NHXWPHD1NWDDTHN3KSRW4Q"
+			],
+			"bot_admin":	[],
+			"owner":		[],
+			"admin":		[],
+			"mod":			[],
+			"normal":		[],
+			"banned":		[]
+		},
+		"database": {
+			"location": "./bobcat.db"
+		},
+		"modules": {
+			"import": [
+				"core/*.js",
+				"internet/*.js"
+			]
+		},
+		"colors": {
+			"primary":	"#ffbf00",
+			"secondary":"#333333",
+			"info":		"#009fbf",
+			"success":	"#00bf00",
+			"warning":	"#ffdf00",
+			"danger":	"#ff1f00"
+		}
+	}
+}
