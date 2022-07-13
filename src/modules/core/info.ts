@@ -29,6 +29,12 @@ commands.push(new Command({
 	description: "Shows bot information",
 	categories:	["Bot Info"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
+		let prefix: string = global.bobcat.config.get("bobcat.prefix");
+		if (msg?.channel.server) prefix = global.bobcat.database.get(
+			msg.channel.server._id,
+			"bobcat.prefix"
+		);
+
 		let table: Table = new Table();
 
 		table.setCol(0, [
@@ -43,7 +49,7 @@ commands.push(new Command({
 
 		table.setCol(2, [
 			"Prefix",
-			global.bobcat.config.get("bobcat.prefix")
+			prefix
 		]);
 
 		table.setCol(3, [
@@ -72,6 +78,12 @@ commands.push(new Command({
 	description: "Shows a list of commands",
 	categories:	["Bot Info"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
+		let prefix: string = global.bobcat.config.get("bobcat.prefix");
+		if (msg?.channel.server) prefix = global.bobcat.database.get(
+			msg.channel.server._id,
+			"bobcat.prefix"
+		);
+
 		if (args[1]) {
 			let mod: Module = global.bobcat.getModule(args[1]);
 			if (!mod) {
@@ -86,8 +98,7 @@ commands.push(new Command({
 					continue;
 				table.setRow(table.numRows(), [
 					cmd.names[0],
-					global.bobcat.config.get("bobcat.prefix") +
-						cmd.names[0] + " " + cmd.args.join(" "),
+					prefix + cmd.names[0] + " " + cmd.args.join(" ").replace(/\</g, "&lt;").replace(/\>/g, "&gt;"),
 					AccessControl.nameAccessLevel(cmd.accessLevel),
 					cmd.description,
 					cmd.categories.join(", ")
@@ -116,7 +127,7 @@ commands.push(new Command({
 			}
 
 			let output: string = `**Loaded Modules**\n${table.toString()}\n` +
-				`Use *${global.bobcat.config.get("bobcat.prefix")}help [module]*`;
+				`Use *${prefix}help [module]*`;
 				if (msg) msg.reply({
 					embeds: [{
 						title: `${global.bobcat.config.get("bobcat.name")} Commands\n`,
@@ -131,6 +142,23 @@ commands.push(new Command({
 
 
 let listeners: Listener[] = [];
+
+listeners.push(new Listener({
+	name:	"prefixlistener",
+	obj:	global.bobcat.client,
+	event:	"message",
+	func:	async (msg: Message): Promise<void> => {
+		if (msg.content?.match(
+			new RegExp(`(?:\<@)?${global.bobcat.client.user._id}\>? *prefix`)
+		)) {
+			let prefix = global.bobcat.database.get(
+				msg.channel.server?._id,
+				"bobcat.prefix"
+			) ?? global.bobcat.config.get("bobcat.prefix") ?? "$";
+			msg.reply("**My prefix is** `" + prefix + "`");
+		}
+	}
+}));
 
 
 export = new Module({

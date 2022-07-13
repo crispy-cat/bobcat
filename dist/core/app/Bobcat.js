@@ -120,10 +120,10 @@ class Bobcat {
             Logger_1.default.log("Listening for commands...");
             this.promptCommand();
             this.client.on("message", (msg) => {
-                var _a, _b, _c, _d, _e;
+                var _a, _b, _c, _d, _e, _f;
                 global.bobcat.database.create((_b = (_a = msg.channel.server) === null || _a === void 0 ? void 0 : _a._id) !== null && _b !== void 0 ? _b : msg.channel._id);
-                let prefix = (_d = global.bobcat.database.get((_c = msg.channel.server) === null || _c === void 0 ? void 0 : _c._id, "bobcat.prefix")) !== null && _d !== void 0 ? _d : "$";
-                if ((_e = msg.content) === null || _e === void 0 ? void 0 : _e.startsWith(prefix)) {
+                let prefix = (_e = (_d = global.bobcat.database.get((_c = msg.channel.server) === null || _c === void 0 ? void 0 : _c._id, "bobcat.prefix")) !== null && _d !== void 0 ? _d : global.bobcat.config.get("bobcat.prefix")) !== null && _e !== void 0 ? _e : "$";
+                if ((_f = msg.content) === null || _f === void 0 ? void 0 : _f.startsWith(prefix)) {
                     msg.channel.startTyping();
                     global.bobcat.command(msg.content.slice(prefix.length), msg);
                     msg.channel.stopTyping();
@@ -139,8 +139,13 @@ class Bobcat {
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
-            Logger_1.default.log("Logging out of Revolt...", Logger_1.default.L_INFO);
-            yield this.client.logout();
+            try {
+                Logger_1.default.log("Logging out of Revolt...", Logger_1.default.L_INFO);
+                yield this.client.logout();
+            }
+            catch (err) {
+                Logger_1.default.log(err, Logger_1.default.L_ERROR);
+            }
             Logger_1.default.log("Closing database...", Logger_1.default.L_INFO);
             this.database.close();
             Logger_1.default.log("Exiting process...", Logger_1.default.L_WARNING);

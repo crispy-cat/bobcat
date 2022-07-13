@@ -97,8 +97,14 @@ commands.push(new Command_1.default({
             msg.reply(":x: You do not have permission to invite others");
             return;
         }
-        let invite = yield msg.channel.createInvite();
-        msg.reply(`:white_check_mark: https://app.revolt.chat/invite/${invite._id}`);
+        try {
+            let invite = yield msg.channel.createInvite();
+            msg.reply(`:white_check_mark: https://app.revolt.chat/invite/${invite._id}`);
+        }
+        catch (err) {
+            Logger_1.default.log(err, Logger_1.default.L_WARNING);
+            msg.reply(":x: Could not create invite");
+        }
     })
 }));
 let listeners = [];

@@ -85,7 +85,7 @@ commands.push(new Command_1.default({
             msg.reply(":x: You do not have permission to assign that role");
             return;
         }
-        let roles = target.roles;
+        let roles = target.roles || [];
         switch (args[1]) {
             case "assign":
                 if (!roles.includes(rid))
@@ -108,7 +108,7 @@ commands.push(new Command_1.default({
     names: ["accesslevel", "al"],
     args: ["<user|role>", "<level>"],
     accessLevel: 3 /* AccessLevel.OWNER */,
-    description: "Assign a role to the target user",
+    description: "Set the bot access level of a role",
     categories: ["Configuration"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
@@ -158,6 +158,29 @@ commands.push(new Command_1.default({
                 return;
         }
         global.bobcat.database.set(msg.channel.server._id, `bobcat.config.access.${id}`, level);
+        msg.reply(":white_check_mark: Configuration updated");
+    })
+}));
+commands.push(new Command_1.default({
+    names: ["prefix"],
+    args: ["<prefix>"],
+    accessLevel: 3 /* AccessLevel.OWNER */,
+    description: "Set the bot's prefix in this server",
+    categories: ["Configuration"],
+    func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
+            if (msg)
+                msg.reply("This command must be executed in a server");
+            else
+                Logger_1.default.log("This command must be executed in a server", Logger_1.default.L_WARNING);
+            return;
+        }
+        if (args.length < 2) {
+            msg.reply(":x: Not enough arguments");
+            return;
+        }
+        let prefix = args.splice(1).join(" ");
+        global.bobcat.database.set(msg.channel.server._id, `bobcat.prefix`, prefix);
         msg.reply(":white_check_mark: Configuration updated");
     })
 }));

@@ -105,7 +105,8 @@ export default class Bobcat {
 		this.promptCommand();
 		this.client.on("message", (msg: Message): void => {
 			global.bobcat.database.create(msg.channel.server?._id ?? msg.channel._id);
-			let prefix = global.bobcat.database.get(msg.channel.server?._id, "bobcat.prefix") ?? "$";
+			let prefix = global.bobcat.database.get(msg.channel.server?._id, "bobcat.prefix") ??
+				global.bobcat.config.get("bobcat.prefix") ?? "$";
 			if (msg.content?.startsWith(prefix)) {
 				msg.channel.startTyping();
 				global.bobcat.command(msg.content.slice(prefix.length), msg);
@@ -122,8 +123,12 @@ export default class Bobcat {
 	}
 
 	public async end(): Promise<void> {
-		Logger.log("Logging out of Revolt...", Logger.L_INFO);
-		await this.client.logout();
+		try {
+			Logger.log("Logging out of Revolt...", Logger.L_INFO);
+			await this.client.logout();
+		} catch (err) {
+			Logger.log(err, Logger.L_ERROR);
+		}
 		Logger.log("Closing database...", Logger.L_INFO);
 		this.database.close();
 		Logger.log("Exiting process...", Logger.L_WARNING);

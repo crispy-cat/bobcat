@@ -26,6 +26,7 @@ class Listener {
         this.obj = listener.obj;
         this.event = listener.event;
         this.func = listener.func;
+        this.exec = this.exec.bind(this);
     }
     attach() {
         this.obj.on(this.event, this.exec);

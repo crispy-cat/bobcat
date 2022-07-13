@@ -85,7 +85,7 @@ commands.push(new Command({
 			return;
 		}
 
-		let roles: string[] = target.roles;
+		let roles: string[] = target.roles || [];
 
 		switch (args[1]) {
 			case "assign":
@@ -118,7 +118,7 @@ commands.push(new Command({
 	names:		["accesslevel", "al"],
 	args:		["<user|role>", "<level>"],
 	accessLevel:AccessLevel.OWNER,
-	description: "Assign a role to the target user",
+	description: "Set the bot access level of a role",
 	categories:	["Configuration"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
 		if (!msg?.channel.server) {
@@ -183,8 +183,34 @@ commands.push(new Command({
 	}
 }));
 
+commands.push(new Command({
+	names:		["prefix"],
+	args:		["<prefix>"],
+	accessLevel:AccessLevel.OWNER,
+	description: "Set the bot's prefix in this server",
+	categories:	["Configuration"],
+	func:		async (args: string[], msg: Message): Promise<void> => {
+		if (!msg?.channel.server) {
+			if (msg) msg.reply("This command must be executed in a server");
+			else Logger.log("This command must be executed in a server", Logger.L_WARNING);
+			return;
+		}
+		if (args.length < 2) {
+			msg.reply(":x: Not enough arguments");
+			return;
+		}
 
+		let prefix: string = args.splice(1).join(" ");
 
+		global.bobcat.database.set(
+			msg.channel.server._id,
+			`bobcat.prefix`,
+			prefix
+		);
+
+		msg.reply(":white_check_mark: Configuration updated");
+	}
+}));
 
 
 let listeners: Listener[] = [];

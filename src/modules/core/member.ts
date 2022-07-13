@@ -105,8 +105,13 @@ commands.push(new Command({
 			return;
 		}
 
-		let invite = await msg.channel.createInvite();
-		msg.reply(`:white_check_mark: https://app.revolt.chat/invite/${invite._id}`);
+		try {
+			let invite = await msg.channel.createInvite();
+			msg.reply(`:white_check_mark: https://app.revolt.chat/invite/${invite._id}`);
+		} catch (err) {
+			Logger.log(err, Logger.L_WARNING);
+			msg.reply(":x: Could not create invite");
+		}
 	}
 }));
 

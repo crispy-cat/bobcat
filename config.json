@@ -4,7 +4,7 @@
 		"formats": {
 			"datetime": "YYYY-MM-DD HH:mm:ss"
 		},
-		"prefix": "$",
+		"prefix": "t$",
 		"accesslevels": {
 			"bot_owner":	[
 				"01G4NHXWPHD1NWDDTHN3KSRW4Q"
@@ -22,7 +22,8 @@
 		"modules": {
 			"import": [
 				"core/*.js",
-				"internet/*.js"
+				"internet/*.js",
+				"games/*.js"
 			]
 		},
 		"colors": {
