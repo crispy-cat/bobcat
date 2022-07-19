@@ -8,6 +8,7 @@
 
 import {Message, Member} from "revolt.js";
 import Logger from "../../core/utilities/Logger";
+import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
 import Listener from "../../core/modules/Listener";
@@ -39,23 +40,21 @@ commands.push(new Command({
 
 		let member: Member = msg.member;
 
-		let tid: string = global.bobcat.findULID(args[1]);
-		if (tid) {
-			let target: Member;
-			try {
-				target = await msg.channel.server.fetchMember(tid);
-			} catch (err) {
-				Logger.log(err.stack, Logger.L_WARNING);
+		if (args[1]) {
+			let target: Member = await RevoltUtils.findMember(msg.channel.server, args[1]);
+			if (!target) {
 				msg.reply(":x: Invalid target");
 				return;
 			}
 
-			if (
-				!member.hasPermission(msg.channel.server, "ManageNicknames") ||
-				!target.inferiorTo(member)
-			) {
-				msg.reply(":x: You do not have permission to change that user's nickname");
-				return;
+			if (msg.author._id != msg.channel.server.owner) {
+				if (
+					!member.hasPermission(msg.channel.server, "ManageNicknames") ||
+					!target.inferiorTo(member)
+				) {
+					msg.reply(":x: You do not have permission to change that user's nickname");
+					return;
+				}
 			}
 
 			let nick: string = args.splice(2).join(" ");

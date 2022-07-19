@@ -10,6 +10,7 @@ import {Message, Member, Channel, Server} from "revolt.js";
 import {Role} from "revolt-api";
 import Logger from "../../core/utilities/Logger";
 import Format from "../../core/utilities/Format";
+import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
 import Listener from "../../core/modules/Listener";
@@ -67,7 +68,7 @@ commands.push(new Command({
 				global.bobcat.database.set(
 					msg.channel.server._id,
 					`bobcat.config.log.${feed}`,
-					global.bobcat.findULID(args[3])
+					RevoltUtils.findChannel(msg.channel.server, args[3])
 				);
 				break;
 			case "disable":

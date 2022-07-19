@@ -85,6 +85,8 @@ commands.push(new Command_1.default({
             server = args[1];
             key = args[2];
         }
+        if (key == "bobcat.eval_key")
+            return;
         let val = JSON.stringify(global.bobcat.database.get(server, key));
         let out = `[${server}:${key}] == ${val}`;
         if (msg)
@@ -114,6 +116,8 @@ commands.push(new Command_1.default({
             key = args[2];
             val = args[3];
         }
+        if (key == "bobcat.eval_key")
+            return;
         global.bobcat.database.set(server, key, JSON.parse(val));
         let out = `[${server}:${key}] == ${val}`;
         if (msg)
@@ -214,6 +218,23 @@ commands.push(new Command_1.default({
         }
         let datetime = Format_1.default.datetime(new Date((0, ulid_1.decodeTime)(ulid)));
         let out = `**ULID ${ulid}**\nCreated at ${datetime}`;
+        if (msg)
+            msg.reply(out);
+        else
+            Logger_1.default.log(out);
+    })
+}));
+commands.push(new Command_1.default({
+    names: ["tick"],
+    args: [],
+    accessLevel: 0 /* AccessLevel.NORMAL */,
+    description: "Current tick",
+    categories: ["Debug"],
+    func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        let clock = global.bobcat.clock;
+        let out = `T: ${clock.tick}\nL: ${clock.lastTick}\n` +
+            `I: ${clock.lastInterval}\nD: ${clock.interval}\n` +
+            `F: ${clock.frequency}\nN: ${Date.now()}`;
         if (msg)
             msg.reply(out);
         else

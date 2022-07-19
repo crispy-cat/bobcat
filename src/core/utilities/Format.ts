@@ -10,10 +10,13 @@ import moment from "moment";
 import Config from "../app/Config";
 
 export default class Format {
-	public static datetime(date?: Date) {
-		if (typeof date === null || typeof date === undefined)
-			date = new Date();
+	public static datetime(date?: Date, format?: string) {
+		/*if (typeof date === null || typeof date === undefined)
+			date = new Date();*/
 
-		return moment(date).format(global.bobcat.config.get("bobcat.formats.datetime") ?? "YYYY-MM-DD HH:mm:ss");
+		format ??= global.bobcat.config.get("bobcat.formats.datetime") ??
+			"YYYY-MM-DD HH:mm:ss";
+
+		return moment(date).format(format);
 	}
 }

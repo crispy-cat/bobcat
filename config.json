@@ -23,7 +23,8 @@
 			"import": [
 				"core/*.js",
 				"internet/*.js",
-				"games/*.js"
+				"games/*.js",
+				"credits/*.js"
 			]
 		},
 		"colors": {
@@ -33,6 +34,12 @@
 			"success":	"#00bf00",
 			"warning":	"#ffdf00",
 			"danger":	"#ff1f00"
+		},
+		"credits": {
+			"global_reward": 0.01,
+			"server_reward": 0.02,
+			"exchange_rate": 1.333,
+			"manager_level": 1
 		}
 	}
 }

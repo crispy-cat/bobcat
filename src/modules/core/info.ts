@@ -29,11 +29,16 @@ commands.push(new Command({
 	description: "Shows bot information",
 	categories:	["Bot Info"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
-		let prefix: string = global.bobcat.config.get("bobcat.prefix");
-		if (msg?.channel.server) prefix = global.bobcat.database.get(
-			msg.channel.server._id,
-			"bobcat.prefix"
-		);
+		let prefix: string = global.bobcat.getPrefix(msg.channel.server);
+
+		let uptime: number = global.bobcat.clock.tick / global.bobcat.clock.frequency;
+		let uptimef: string = Math.floor(uptime / (24*60*60)) + "d";
+		uptime %= 24*60*60;
+		uptimef += Math.floor(uptime / (60*60)) + "h";
+		uptime %= 60*60;
+		uptimef += Math.floor(uptime / 60) + "m";
+		uptime %= 60;
+		uptimef += Math.floor(uptime) + "s";
 
 		let table: Table = new Table();
 
@@ -57,6 +62,11 @@ commands.push(new Command({
 			`<@${global.bobcat.config.get("bobcat.accesslevels.bot_owner")[0]}>`
 		]);
 
+		table.setCol(4, [
+			"Uptime",
+			uptimef
+		]);
+
 		if (msg) {
 			msg.reply({
 				embeds: [{
@@ -78,11 +88,7 @@ commands.push(new Command({
 	description: "Shows a list of commands",
 	categories:	["Bot Info"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
-		let prefix: string = global.bobcat.config.get("bobcat.prefix");
-		if (msg?.channel.server) prefix = global.bobcat.database.get(
-			msg.channel.server._id,
-			"bobcat.prefix"
-		);
+		let prefix: string = global.bobcat.getPrefix(msg.channel.server);
 
 		if (args[1]) {
 			let mod: Module = global.bobcat.getModule(args[1]);
@@ -98,7 +104,8 @@ commands.push(new Command({
 					continue;
 				table.setRow(table.numRows(), [
 					cmd.names[0],
-					prefix + cmd.names[0] + " " + cmd.args.join(" ").replace(/\</g, "&lt;").replace(/\>/g, "&gt;"),
+					prefix + cmd.names[0] + " " + cmd.args.join(" ")
+						.replace(/\</g, "&lt;").replace(/\>/g, "&gt;").replace(/\|/g, "\\|"),
 					AccessControl.nameAccessLevel(cmd.accessLevel),
 					cmd.description,
 					cmd.categories.join(", ")
@@ -150,15 +157,23 @@ listeners.push(new Listener({
 	func:	async (msg: Message): Promise<void> => {
 		if (msg.content?.match(
 			new RegExp(`(?:\<@)?${global.bobcat.client.user._id}\>? *prefix`)
-		)) {
-			let prefix = global.bobcat.database.get(
-				msg.channel.server?._id,
-				"bobcat.prefix"
-			) ?? global.bobcat.config.get("bobcat.prefix") ?? "$";
-			msg.reply("**My prefix is** `" + prefix + "`");
-		}
+		)) msg.reply("**My prefix is** `" + global.bobcat.getPrefix(msg.channel.server) + "`");
 	}
 }));
+
+listeners.push(new Listener({
+	name:	"status",
+	obj:	global.bobcat.client,
+	event:	"ready",
+	func:	async (): Promise<void> => {
+		global.bobcat.client.users.edit({
+			status: {
+				text: `@${global.bobcat.client.user.username} prefix`,
+				presence: "Online"
+			}
+		});
+	}
+}))
 
 
 export = new Module({

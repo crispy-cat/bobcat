@@ -9,6 +9,7 @@
 import {Message, Member} from "revolt.js";
 import {Role} from "revolt-api";
 import Logger from "../../core/utilities/Logger";
+import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
 import Listener from "../../core/modules/Listener";
@@ -36,51 +37,36 @@ commands.push(new Command({
 			msg.reply(":x: Not enough arguments");
 			return;
 		}
-
 		if (args[1] != "assign" && args[1] != "remove") {
 			msg.reply(":x: Invalid action");
 			return;
 		}
 
 		let member: Member = msg.member;
-		let target: Member;
-		try {
-			target = await msg.channel.server.fetchMember(global.bobcat.findULID(args[3]));
-		} catch (err) {
-			Logger.log(err.stack, Logger.L_WARNING);
+		let target: Member = await RevoltUtils.findMember(msg.channel.server, args[3]);
+		if (!target) {
 			msg.reply(":x: Invalid target");
 			return;
 		}
 
-		if (!member.hasPermission(msg.channel.server, "AssignRoles")) {
-			msg.reply(":x: You do not have permission to assign roles");
-			return;
-		}
-
-		if (!target.inferiorTo(member)) {
-			msg.reply(":x: You do not have permission to modify that users's roles");
-			return;
-		}
-
-		let rid: string = global.bobcat.findULID(args[2]);
-		let role: Role;
-		if (rid) {
-			role = msg.channel.server.roles[rid];
-		} else {
-			for (let i in msg.channel.server.roles) {
-				let r: Role = msg.channel.server.roles[i];
-				if (r.name == args[2]) {
-					rid = i;
-					role = r;
-				}
+		if (msg.author._id != msg.channel.server.owner) {
+			if (!member.hasPermission(msg.channel.server, "AssignRoles")) {
+				msg.reply(":x: You do not have permission to assign roles");
+				return;
+			}
+			if (!target.inferiorTo(member)) {
+				msg.reply(":x: You do not have permission to modify that users's roles");
+				return;
 			}
 		}
+
+		let role: {id: string, role: Role} = RevoltUtils.findRole(msg.channel.server, args[2]);
 		if (!role) {
 			msg.reply(":x: Invalid role");
 			return;
 		}
 
-		if (member.ranking >= role.rank) {
+		if (member.ranking >= role.role.rank) {
 			msg.reply(":x: You do not have permission to assign that role");
 			return;
 		}
@@ -89,13 +75,13 @@ commands.push(new Command({
 
 		switch (args[1]) {
 			case "assign":
-				if (!roles.includes(rid))
-					roles.push(rid);
+				if (!roles.includes(role.id))
+					roles.push(role.id);
 				break;
 
 			case "remove":
-				if (roles.includes(rid))
-					roles = roles.filter((r: string): boolean => r != rid);
+				if (roles.includes(role.id))
+					roles = roles.filter((r: string): boolean => r != role.id);
 				break;
 		}
 
@@ -106,7 +92,7 @@ commands.push(new Command({
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
 			`@${member.user.username} changed @${target.user.username}'s roles\n` +
-				`${args[1]} role '${role.name}'`,
+				`${args[1]} role '${role.role.name}'`,
 			global.bobcat.config.get("bobcat.colors.info")
 		);
 

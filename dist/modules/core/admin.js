@@ -19,6 +19,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
+const RevoltUtils_1 = __importDefault(require("../../core/utilities/RevoltUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
 let functions = [];
@@ -46,61 +47,46 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        let target;
-        try {
-            target = yield msg.channel.server.fetchMember(global.bobcat.findULID(args[3]));
-        }
-        catch (err) {
-            Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[3]);
+        if (!target) {
             msg.reply(":x: Invalid target");
             return;
         }
-        if (!member.hasPermission(msg.channel.server, "AssignRoles")) {
-            msg.reply(":x: You do not have permission to assign roles");
-            return;
-        }
-        if (!target.inferiorTo(member)) {
-            msg.reply(":x: You do not have permission to modify that users's roles");
-            return;
-        }
-        let rid = global.bobcat.findULID(args[2]);
-        let role;
-        if (rid) {
-            role = msg.channel.server.roles[rid];
-        }
-        else {
-            for (let i in msg.channel.server.roles) {
-                let r = msg.channel.server.roles[i];
-                if (r.name == args[2]) {
-                    rid = i;
-                    role = r;
-                }
+        if (msg.author._id != msg.channel.server.owner) {
+            if (!member.hasPermission(msg.channel.server, "AssignRoles")) {
+                msg.reply(":x: You do not have permission to assign roles");
+                return;
+            }
+            if (!target.inferiorTo(member)) {
+                msg.reply(":x: You do not have permission to modify that users's roles");
+                return;
             }
         }
+        let role = RevoltUtils_1.default.findRole(msg.channel.server, args[2]);
         if (!role) {
             msg.reply(":x: Invalid role");
             return;
         }
-        if (member.ranking >= role.rank) {
+        if (member.ranking >= role.role.rank) {
             msg.reply(":x: You do not have permission to assign that role");
             return;
         }
         let roles = target.roles || [];
         switch (args[1]) {
             case "assign":
-                if (!roles.includes(rid))
-                    roles.push(rid);
+                if (!roles.includes(role.id))
+                    roles.push(role.id);
                 break;
             case "remove":
-                if (roles.includes(rid))
-                    roles = roles.filter((r) => r != rid);
+                if (roles.includes(role.id))
+                    roles = roles.filter((r) => r != role.id);
                 break;
         }
         yield target.edit({
             roles: roles
         });
         yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} changed @${target.user.username}'s roles\n` +
-            `${args[1]} role '${role.name}'`, global.bobcat.config.get("bobcat.colors.info"));
+            `${args[1]} role '${role.role.name}'`, global.bobcat.config.get("bobcat.colors.info"));
         msg.reply(":white_check_mark: Roles updated");
     })
 }));

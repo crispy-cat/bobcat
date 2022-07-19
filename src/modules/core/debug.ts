@@ -10,6 +10,7 @@ import FS from "fs";
 import {Message} from "revolt.js";
 import crypto from "crypto";
 import {decodeTime} from "ulid";
+import {Clock} from "../../core/app/Clock";
 import Logger from "../../core/utilities/Logger";
 import Format from "../../core/utilities/Format";
 import Module from "../../core/modules/Module";
@@ -78,6 +79,8 @@ commands.push(new Command({
 			key = args[2];
 		}
 
+		if (key == "bobcat.eval_key") return;
+
 		let val: string = JSON.stringify(global.bobcat.database.get(server, key));
 		let out: string = `[${server}:${key}] == ${val}`;
 		if (msg) msg.reply(out);
@@ -104,6 +107,8 @@ commands.push(new Command({
 			key = args[2];
 			val = args[3];
 		}
+
+		if (key == "bobcat.eval_key") return;
 
 		global.bobcat.database.set(server, key, JSON.parse(val));
 		let out: string = `[${server}:${key}] == ${val}`;
@@ -203,6 +208,22 @@ commands.push(new Command({
 		}
 		let datetime: string = Format.datetime(new Date(decodeTime(ulid)));
 		let out: string = `**ULID ${ulid}**\nCreated at ${datetime}`;
+		if (msg) msg.reply(out);
+		else Logger.log(out);
+	}
+}));
+
+commands.push(new Command({
+	names:		["tick"],
+	args:		[],
+	accessLevel:AccessLevel.NORMAL,
+	description:"Current tick",
+	categories:	["Debug"],
+	func:		async (args: string[], msg: Message): Promise<void> => {
+		let clock: Clock = global.bobcat.clock;
+		let out: string = `T: ${clock.tick}\nL: ${clock.lastTick}\n` +
+			`I: ${clock.lastInterval}\nD: ${clock.interval}\n` +
+			`F: ${clock.frequency}\nN: ${Date.now()}`;
 		if (msg) msg.reply(out);
 		else Logger.log(out);
 	}

@@ -9,10 +9,11 @@
 import * as readline from "readline";
 import glob from "glob";
 import axios, {AxiosInstance} from "axios";
-import {Client, Message} from "revolt.js";
+import {Client, Message, Server} from "revolt.js";
 import Config from "../app/Config";
 import Logger from "../utilities/Logger";
 import Database from "../app/Database";
+import {Clock} from "../app/Clock";
 import Module from "../modules/Module";
 import ModuleFunction from "../modules/ModuleFunction";
 import AccessControl from "../permissions/AccessControl";
@@ -22,6 +23,7 @@ export default class Bobcat {
 	public readonly config: Config;
 	public readonly client: Client;
 	public readonly database: Database;
+	public readonly clock: Clock;
 	public readonly rl: readline.Interface;
 	public readonly axios: AxiosInstance;
 	private _modules: Module[] = [];
@@ -31,6 +33,7 @@ export default class Bobcat {
 		this.config = new Config(root + "/config.json");
 		this.client = new Client();
 		this.database = new Database(root + "/bobcat.db");
+		this.clock = new Clock();
 		this.rl = readline.createInterface({
 			input: process.stdin,
 			output: process.stdout
@@ -40,7 +43,7 @@ export default class Bobcat {
 		this.axios.defaults.headers.common["User-Agent"] = "BobcatBot/" + global.version;
 	}
 
-	public get modules() {
+	public get modules(): Module[] {
 		return this._modules;
 	}
 
@@ -73,6 +76,7 @@ export default class Bobcat {
 		Logger.log("Opening database...");
 		this.database.open();
 		this.database.create("bobcat");
+		this.database.create("global");
 
 		Logger.log("Loading modules...");
 		let gpaths: string[] = (
@@ -104,9 +108,8 @@ export default class Bobcat {
 		Logger.log("Listening for commands...");
 		this.promptCommand();
 		this.client.on("message", (msg: Message): void => {
-			global.bobcat.database.create(msg.channel.server?._id ?? msg.channel._id);
-			let prefix = global.bobcat.database.get(msg.channel.server?._id, "bobcat.prefix") ??
-				global.bobcat.config.get("bobcat.prefix") ?? "$";
+			if (msg.channel.server) global.bobcat.database.create(msg.channel.server._id);
+			let prefix: string = this.getPrefix(msg.channel.server);
 			if (msg.content?.startsWith(prefix)) {
 				msg.channel.startTyping();
 				global.bobcat.command(msg.content.slice(prefix.length), msg);
@@ -123,12 +126,6 @@ export default class Bobcat {
 	}
 
 	public async end(): Promise<void> {
-		try {
-			Logger.log("Logging out of Revolt...", Logger.L_INFO);
-			await this.client.logout();
-		} catch (err) {
-			Logger.log(err, Logger.L_ERROR);
-		}
 		Logger.log("Closing database...", Logger.L_INFO);
 		this.database.close();
 		Logger.log("Exiting process...", Logger.L_WARNING);
@@ -189,5 +186,12 @@ export default class Bobcat {
 	public findULID(str: string): string {
 		if (!str) return null;
 		return str.match(/[0-9A-HJKMNP-TV-Z]{26}/)?.[0];
+	}
+
+	public getPrefix(server?: Server): string {
+		if (server) return global.bobcat.database.get(
+			server._id, "bobcat.prefix"
+		) ?? global.bobcat.config.get("bobcat.prefix") ?? "$";
+		else return global.bobcat.config.get("bobcat.prefix") ?? "$";
 	}
 }

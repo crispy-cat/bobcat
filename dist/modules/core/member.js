@@ -19,6 +19,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
+const RevoltUtils_1 = __importDefault(require("../../core/utilities/RevoltUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
 let functions = [];
@@ -43,21 +44,18 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        let tid = global.bobcat.findULID(args[1]);
-        if (tid) {
-            let target;
-            try {
-                target = yield msg.channel.server.fetchMember(tid);
-            }
-            catch (err) {
-                Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        if (args[1]) {
+            let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+            if (!target) {
                 msg.reply(":x: Invalid target");
                 return;
             }
-            if (!member.hasPermission(msg.channel.server, "ManageNicknames") ||
-                !target.inferiorTo(member)) {
-                msg.reply(":x: You do not have permission to change that user's nickname");
-                return;
+            if (msg.author._id != msg.channel.server.owner) {
+                if (!member.hasPermission(msg.channel.server, "ManageNicknames") ||
+                    !target.inferiorTo(member)) {
+                    msg.reply(":x: You do not have permission to change that user's nickname");
+                    return;
+                }
             }
             let nick = args.splice(2).join(" ");
             yield target.edit({

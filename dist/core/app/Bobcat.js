@@ -49,6 +49,7 @@ const revolt_js_1 = require("revolt.js");
 const Config_1 = __importDefault(require("../app/Config"));
 const Logger_1 = __importDefault(require("../utilities/Logger"));
 const Database_1 = __importDefault(require("../app/Database"));
+const Clock_1 = require("../app/Clock");
 const AccessControl_1 = __importDefault(require("../permissions/AccessControl"));
 class Bobcat {
     constructor(root) {
@@ -57,6 +58,7 @@ class Bobcat {
         this.config = new Config_1.default(root + "/config.json");
         this.client = new revolt_js_1.Client();
         this.database = new Database_1.default(root + "/bobcat.db");
+        this.clock = new Clock_1.Clock();
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
@@ -94,6 +96,7 @@ class Bobcat {
             Logger_1.default.log("Opening database...");
             this.database.open();
             this.database.create("bobcat");
+            this.database.create("global");
             Logger_1.default.log("Loading modules...");
             let gpaths = ((_a = this.config.get("bobcat.modules.import")) !== null && _a !== void 0 ? _a : []);
             let paths = [];
@@ -120,10 +123,11 @@ class Bobcat {
             Logger_1.default.log("Listening for commands...");
             this.promptCommand();
             this.client.on("message", (msg) => {
-                var _a, _b, _c, _d, _e, _f;
-                global.bobcat.database.create((_b = (_a = msg.channel.server) === null || _a === void 0 ? void 0 : _a._id) !== null && _b !== void 0 ? _b : msg.channel._id);
-                let prefix = (_e = (_d = global.bobcat.database.get((_c = msg.channel.server) === null || _c === void 0 ? void 0 : _c._id, "bobcat.prefix")) !== null && _d !== void 0 ? _d : global.bobcat.config.get("bobcat.prefix")) !== null && _e !== void 0 ? _e : "$";
-                if ((_f = msg.content) === null || _f === void 0 ? void 0 : _f.startsWith(prefix)) {
+                var _a;
+                if (msg.channel.server)
+                    global.bobcat.database.create(msg.channel.server._id);
+                let prefix = this.getPrefix(msg.channel.server);
+                if ((_a = msg.content) === null || _a === void 0 ? void 0 : _a.startsWith(prefix)) {
                     msg.channel.startTyping();
                     global.bobcat.command(msg.content.slice(prefix.length), msg);
                     msg.channel.stopTyping();
@@ -139,13 +143,6 @@ class Bobcat {
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                Logger_1.default.log("Logging out of Revolt...", Logger_1.default.L_INFO);
-                yield this.client.logout();
-            }
-            catch (err) {
-                Logger_1.default.log(err, Logger_1.default.L_ERROR);
-            }
             Logger_1.default.log("Closing database...", Logger_1.default.L_INFO);
             this.database.close();
             Logger_1.default.log("Exiting process...", Logger_1.default.L_WARNING);
@@ -208,6 +205,13 @@ class Bobcat {
         if (!str)
             return null;
         return (_a = str.match(/[0-9A-HJKMNP-TV-Z]{26}/)) === null || _a === void 0 ? void 0 : _a[0];
+    }
+    getPrefix(server) {
+        var _a, _b, _c;
+        if (server)
+            return (_b = (_a = global.bobcat.database.get(server._id, "bobcat.prefix")) !== null && _a !== void 0 ? _a : global.bobcat.config.get("bobcat.prefix")) !== null && _b !== void 0 ? _b : "$";
+        else
+            return (_c = global.bobcat.config.get("bobcat.prefix")) !== null && _c !== void 0 ? _c : "$";
     }
 }
 exports.default = Bobcat;

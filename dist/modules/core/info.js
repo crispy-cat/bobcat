@@ -33,9 +33,15 @@ commands.push(new Command_1.default({
     description: "Shows bot information",
     categories: ["Bot Info"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        let prefix = global.bobcat.config.get("bobcat.prefix");
-        if (msg === null || msg === void 0 ? void 0 : msg.channel.server)
-            prefix = global.bobcat.database.get(msg.channel.server._id, "bobcat.prefix");
+        let prefix = global.bobcat.getPrefix(msg.channel.server);
+        let uptime = global.bobcat.clock.tick / global.bobcat.clock.frequency;
+        let uptimef = Math.floor(uptime / (24 * 60 * 60)) + "d";
+        uptime %= 24 * 60 * 60;
+        uptimef += Math.floor(uptime / (60 * 60)) + "h";
+        uptime %= 60 * 60;
+        uptimef += Math.floor(uptime / 60) + "m";
+        uptime %= 60;
+        uptimef += Math.floor(uptime) + "s";
         let table = new Table_1.default();
         table.setCol(0, [
             "Ping",
@@ -52,6 +58,10 @@ commands.push(new Command_1.default({
         table.setCol(3, [
             "Owner",
             `<@${global.bobcat.config.get("bobcat.accesslevels.bot_owner")[0]}>`
+        ]);
+        table.setCol(4, [
+            "Uptime",
+            uptimef
         ]);
         if (msg) {
             msg.reply({
@@ -74,9 +84,7 @@ commands.push(new Command_1.default({
     description: "Shows a list of commands",
     categories: ["Bot Info"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        let prefix = global.bobcat.config.get("bobcat.prefix");
-        if (msg === null || msg === void 0 ? void 0 : msg.channel.server)
-            prefix = global.bobcat.database.get(msg.channel.server._id, "bobcat.prefix");
+        let prefix = global.bobcat.getPrefix(msg.channel.server);
         if (args[1]) {
             let mod = global.bobcat.getModule(args[1]);
             if (!mod) {
@@ -92,7 +100,8 @@ commands.push(new Command_1.default({
                     continue;
                 table.setRow(table.numRows(), [
                     cmd.names[0],
-                    prefix + cmd.names[0] + " " + cmd.args.join(" ").replace(/\</g, "&lt;").replace(/\>/g, "&gt;"),
+                    prefix + cmd.names[0] + " " + cmd.args.join(" ")
+                        .replace(/\</g, "&lt;").replace(/\>/g, "&gt;").replace(/\|/g, "\\|"),
                     AccessControl_1.default.nameAccessLevel(cmd.accessLevel),
                     cmd.description,
                     cmd.categories.join(", ")
@@ -142,11 +151,22 @@ listeners.push(new Listener_1.default({
     obj: global.bobcat.client,
     event: "message",
     func: (msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d;
-        if ((_a = msg.content) === null || _a === void 0 ? void 0 : _a.match(new RegExp(`(?:\<@)?${global.bobcat.client.user._id}\>? *prefix`))) {
-            let prefix = (_d = (_c = global.bobcat.database.get((_b = msg.channel.server) === null || _b === void 0 ? void 0 : _b._id, "bobcat.prefix")) !== null && _c !== void 0 ? _c : global.bobcat.config.get("bobcat.prefix")) !== null && _d !== void 0 ? _d : "$";
-            msg.reply("**My prefix is** `" + prefix + "`");
-        }
+        var _a;
+        if ((_a = msg.content) === null || _a === void 0 ? void 0 : _a.match(new RegExp(`(?:\<@)?${global.bobcat.client.user._id}\>? *prefix`)))
+            msg.reply("**My prefix is** `" + global.bobcat.getPrefix(msg.channel.server) + "`");
+    })
+}));
+listeners.push(new Listener_1.default({
+    name: "status",
+    obj: global.bobcat.client,
+    event: "ready",
+    func: () => __awaiter(void 0, void 0, void 0, function* () {
+        global.bobcat.client.users.edit({
+            status: {
+                text: `@${global.bobcat.client.user.username} prefix`,
+                presence: "Online"
+            }
+        });
     })
 }));
 module.exports = new Module_1.default({

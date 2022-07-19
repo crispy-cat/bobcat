@@ -20,6 +20,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
 const Format_1 = __importDefault(require("../../core/utilities/Format"));
+const RevoltUtils_1 = __importDefault(require("../../core/utilities/RevoltUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
 const ModuleFunction_1 = __importDefault(require("../../core/modules/ModuleFunction"));
@@ -64,7 +65,7 @@ commands.push(new Command_1.default({
         let feed = args[2].replace(/[^a-z0-9\-_]+/g, "");
         switch (args[1]) {
             case "enable":
-                global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, global.bobcat.findULID(args[3]));
+                global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, RevoltUtils_1.default.findChannel(msg.channel.server, args[3]));
                 break;
             case "disable":
                 global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, null);

@@ -21,8 +21,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
 const Table_1 = __importDefault(require("../../core/utilities/Table"));
 const Format_1 = __importDefault(require("../../core/utilities/Format"));
+const RevoltUtils_1 = __importDefault(require("../../core/utilities/RevoltUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
+const Listener_1 = __importDefault(require("../../core/modules/Listener"));
 const ModuleFunction_1 = __importDefault(require("../../core/modules/ModuleFunction"));
 let functions = [];
 functions.push(new ModuleFunction_1.default({
@@ -42,7 +44,7 @@ commands.push(new Command_1.default({
     description: "View the target user's moderation record",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _b, _c, _d, _e;
+        var _b, _c, _d;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -50,20 +52,20 @@ commands.push(new Command_1.default({
                 Logger_1.default.log("This command must be executed in a server", Logger_1.default.L_WARNING);
             return;
         }
-        let tid = (_b = global.bobcat.findULID(args[1])) !== null && _b !== void 0 ? _b : msg.author._id;
         let member = msg.member;
-        let target;
-        try {
-            target = yield msg.channel.server.fetchMember(tid);
-            if (member.inferiorTo(target)) {
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+        let tid;
+        if (target) {
+            if (member.inferiorTo(target) && msg.author._id != msg.channel.server.owner) {
                 msg.reply(":x: You do not have permission to view that user's record");
                 return;
             }
+            tid = target.user._id;
         }
-        catch (err) {
-            Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        else {
+            tid = global.bobcat.findULID(args[1]);
         }
-        let records = (_c = global.bobcat.database.get(msg.channel.server._id, "bobcat.moderation.record." + tid)) !== null && _c !== void 0 ? _c : [];
+        let records = (_b = global.bobcat.database.get(msg.channel.server._id, "bobcat.moderation.record." + tid)) !== null && _b !== void 0 ? _b : [];
         if (!records.length) {
             msg.reply("That user has no moderation record.");
             return;
@@ -79,7 +81,7 @@ commands.push(new Command_1.default({
                 entry.comment
             ]);
         }
-        msg.reply(`**${(_e = "@" + ((_d = target === null || target === void 0 ? void 0 : target.user) === null || _d === void 0 ? void 0 : _d.username)) !== null && _e !== void 0 ? _e : `<@${tid}>`}'s Moderation Record**\n` +
+        msg.reply(`**${(_d = "@" + ((_c = target === null || target === void 0 ? void 0 : target.user) === null || _c === void 0 ? void 0 : _c.username)) !== null && _d !== void 0 ? _d : `<@${tid}>`}'s Moderation Record**\n` +
             table.toString());
     })
 }));
@@ -102,16 +104,12 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        let target;
-        try {
-            target = yield msg.channel.server.fetchMember(global.bobcat.findULID(args[1]));
-        }
-        catch (err) {
-            Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+        if (!target) {
             msg.reply(":x: Invalid target");
             return;
         }
-        if (!target.inferiorTo(member)) {
+        if (!target.inferiorTo(member) && msg.author._id != msg.channel.server.owner) {
             msg.reply(":x: You do not have permission to warn that user");
             return;
         }
@@ -146,19 +144,17 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        let target;
-        try {
-            target = yield msg.channel.server.fetchMember(global.bobcat.findULID(args[1]));
-        }
-        catch (err) {
-            Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+        if (!target) {
             msg.reply(":x: Invalid target");
             return;
         }
-        if (!member.hasPermission(msg.channel.server, "KickMembers") ||
-            !target.inferiorTo(member)) {
-            msg.reply(":x: You do not have permission to kick that user");
-            return;
+        if (msg.author._id != msg.channel.server.owner) {
+            if (!member.hasPermission(msg.channel.server, "KickMembers") ||
+                !target.inferiorTo(member)) {
+                msg.reply(":x: You do not have permission to kick that user");
+                return;
+            }
         }
         if (!target.kickable) {
             msg.reply(":x: Bobcat cannot kick that user");
@@ -196,19 +192,17 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        let target;
-        try {
-            target = yield msg.channel.server.fetchMember(global.bobcat.findULID(args[1]));
-        }
-        catch (err) {
-            Logger_1.default.log(err.stack, Logger_1.default.L_WARNING);
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+        if (!target) {
             msg.reply(":x: Invalid target");
             return;
         }
-        if (!member.hasPermission(msg.channel.server, "BanMembers") ||
-            !target.inferiorTo(member)) {
-            msg.reply(":x: You do not have permission to ban that user");
-            return;
+        if (msg.author._id != msg.channel.server.owner) {
+            if (!member.hasPermission(msg.channel.server, "BanMembers") ||
+                !target.inferiorTo(member)) {
+                msg.reply(":x: You do not have permission to ban that user");
+                return;
+            }
         }
         if (!target.bannable) {
             msg.reply(":x: Bobcat cannot ban that user");
@@ -227,6 +221,71 @@ commands.push(new Command_1.default({
         });
         yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} banned @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
         msg.reply(":white_check_mark: User has been banned.");
+    })
+}));
+commands.push(new Command_1.default({
+    names: ["tempban", "tban"],
+    args: ["<target>", "<time{d|h|m}>", "[comment]"],
+    accessLevel: 1 /* AccessLevel.MOD */,
+    description: "Temporarily ban the target user",
+    categories: ["Moderation"],
+    func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _e;
+        if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
+            if (msg)
+                msg.reply("This command must be executed in a server");
+            else
+                Logger_1.default.log("This command must be executed in a server", Logger_1.default.L_WARNING);
+            return;
+        }
+        if (args.length < 3) {
+            msg.reply(":x: Not enough arguments");
+            return;
+        }
+        let member = msg.member;
+        let target = yield RevoltUtils_1.default.findMember(msg.channel.server, args[1]);
+        if (!target) {
+            msg.reply(":x: Invalid target");
+            return;
+        }
+        if (msg.author._id != msg.channel.server.owner) {
+            if (!member.hasPermission(msg.channel.server, "BanMembers") ||
+                !target.inferiorTo(member)) {
+                msg.reply(":x: You do not have permission to ban that user");
+                return;
+            }
+        }
+        if (!target.bannable) {
+            msg.reply(":x: Bobcat cannot ban that user");
+            return;
+        }
+        let time = Date.now();
+        let match = args[2].match(/^(?:(\d+)d?)?(?:(\d+)h?)?(?:(\d+)m?)?$/i);
+        let h = parseInt(match[1]);
+        let m = parseInt(match[2]);
+        let s = parseInt(match[3]);
+        time += ((!isNaN(h)) ? h : 0) * 24 * 60 * 60 * 1000;
+        time += ((!isNaN(m)) ? m : 0) * 60 * 60 * 1000;
+        time += ((!isNaN(s)) ? s : 0) * 60 * 1000;
+        let timef = Format_1.default.datetime(new Date(time));
+        let comment = (args.length > 3) ? args.splice(3).join(" ") : "No comment";
+        comment = `**Banned until ${timef}**\n${comment}`;
+        global.bobcat.modfunc("core.mod", "addModerationRecord", msg.channel.server._id, target._id.user, {
+            moderator: member._id.user,
+            action: "Tempban",
+            timestamp: Date.now() / 1000,
+            comment: comment
+        });
+        yield (yield target.user.openDM()).sendMessage(`You have been temporarily banned from **${msg.channel.server.name}**:\n${comment}`);
+        let bans = (_e = global.bobcat.database.get(msg.channel.server._id, "bobcat.tempbans")) !== null && _e !== void 0 ? _e : [];
+        bans = bans.filter((b) => b.user != target._id.user);
+        bans.push({ user: target._id.user, expires: time });
+        global.bobcat.database.set(msg.channel.server._id, "bobcat.tempbans", bans);
+        yield msg.channel.server.banUser(target._id.user, {
+            reason: comment
+        });
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} tempbanned @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
+        msg.reply(":white_check_mark: User has been tempbanned.");
     })
 }));
 commands.push(new Command_1.default({
@@ -249,7 +308,8 @@ commands.push(new Command_1.default({
         }
         let tid = global.bobcat.findULID(args[1]);
         let member = msg.member;
-        if (!member.hasPermission(msg.channel.server, "BanMembers")) {
+        if (!member.hasPermission(msg.channel.server, "BanMembers") &&
+            msg.author._id != msg.channel.server.owner) {
             msg.reply(":x: You do not have permission to unban users");
             return;
         }
@@ -291,7 +351,8 @@ commands.push(new Command_1.default({
             return;
         }
         let member = msg.member;
-        if (!member.hasPermission(msg.channel.server, "ManageMessages")) {
+        if (!member.hasPermission(msg.channel.server, "ManageMessages") &&
+            msg.author._id != msg.channel.server.owner) {
             msg.reply(":x: You do not have permission to purge messages");
             return;
         }
@@ -322,6 +383,36 @@ commands.push(new Command_1.default({
     })
 }));
 let listeners = [];
+listeners.push(new Listener_1.default({
+    name: "rmtempban",
+    obj: global.bobcat.clock,
+    event: "tick",
+    func: (tick) => __awaiter(void 0, void 0, void 0, function* () {
+        var _g;
+        if (tick % (10 * global.bobcat.clock.frequency))
+            return;
+        let now = Date.now();
+        for (let [sid, server] of global.bobcat.client.servers) {
+            let bans = (_g = global.bobcat.database.get(sid, "bobcat.tempbans")) !== null && _g !== void 0 ? _g : [];
+            let inds = [];
+            for (let i in bans) {
+                let ban = bans[i];
+                if (ban.expires < now) {
+                    try {
+                        yield server.unbanUser(ban.user);
+                        inds.push(parseInt(i));
+                        yield global.bobcat.modfunc("core.logging", "log", server, "moderation", `<@${ban.user}>'s temporary ban has expired`, global.bobcat.config.get("bobcat.colors.success"));
+                    }
+                    catch (err) {
+                        Logger_1.default.log(`Error while trying to remove tempban ${sid}:${ban.user}:\n`, err, Logger_1.default.L_ERROR);
+                    }
+                }
+            }
+            bans = bans.filter((_, i) => !inds.includes(i));
+            global.bobcat.database.set(sid, "bobcat.tempbans", bans);
+        }
+    })
+}));
 module.exports = new Module_1.default({
     name: "core.mod",
     author: "@crispycat",
