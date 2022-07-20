@@ -31,6 +31,7 @@ commands.push(new Command_1.default({
     description: "Assign a role to the target user",
     categories: ["Roles", "Administration"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -85,7 +86,7 @@ commands.push(new Command_1.default({
         yield target.edit({
             roles: roles
         });
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} changed @${target.user.username}'s roles\n` +
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} changed @${(_a = target.user) === null || _a === void 0 ? void 0 : _a.username}'s roles\n` +
             `${args[1]} role '${role.role.name}'`, global.bobcat.config.get("bobcat.colors.info"));
         msg.reply(":white_check_mark: Roles updated");
     })

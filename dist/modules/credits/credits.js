@@ -129,7 +129,7 @@ commands.push(new Command_1.default({
     description: "Modify the target users's balance",
     categories: ["Credits"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _g, _h, _j;
+        var _g, _h, _j, _k;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -175,8 +175,8 @@ commands.push(new Command_1.default({
                 bal = parseFloat(match[2]);
         }
         global.bobcat.database.set(msg.channel.server._id, `bobcat.credits.balance.${target._id.user}`, bal);
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "credits", `@${member.user.username} changed @${target.user.username}'s balance from ${oldbal.toFixed(5)} to ${bal.toFixed(5)}`, MONEYGREEN);
-        msg.reply(`@${(_j = target === null || target === void 0 ? void 0 : target.user) === null || _j === void 0 ? void 0 : _j.username}'s new balance: ${bal.toFixed(5)} credits`);
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "credits", `@${member.user.username} changed @${(_j = target.user) === null || _j === void 0 ? void 0 : _j.username}'s balance from ${oldbal.toFixed(5)} to ${bal.toFixed(5)}`, MONEYGREEN);
+        msg.reply(`@${(_k = target === null || target === void 0 ? void 0 : target.user) === null || _k === void 0 ? void 0 : _k.username}'s new balance: ${bal.toFixed(5)} credits`);
     })
 }));
 commands.push(new Command_1.default({
@@ -233,16 +233,16 @@ listeners.push(new Listener_1.default({
     obj: global.bobcat.client,
     event: "message",
     func: (msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _k, _l, _m, _o, _p;
+        var _l, _m, _o, _p, _q;
         let prefix = global.bobcat.getPrefix(msg.channel.server);
-        if ((_k = msg.content) === null || _k === void 0 ? void 0 : _k.startsWith(prefix))
+        if ((_l = msg.content) === null || _l === void 0 ? void 0 : _l.startsWith(prefix))
             return;
-        let gbal = (_l = global.bobcat.database.get("global", `bobcat.credits.balance.${msg.author._id}`)) !== null && _l !== void 0 ? _l : 0;
-        gbal += (_m = global.bobcat.config.get("bobcat.credits.global_reward")) !== null && _m !== void 0 ? _m : 0;
+        let gbal = (_m = global.bobcat.database.get("global", `bobcat.credits.balance.${msg.author._id}`)) !== null && _m !== void 0 ? _m : 0;
+        gbal += (_o = global.bobcat.config.get("bobcat.credits.global_reward")) !== null && _o !== void 0 ? _o : 0;
         global.bobcat.database.set("global", `bobcat.credits.balance.${msg.author._id}`, gbal);
         if (msg.channel.server) {
-            let bal = (_o = global.bobcat.database.get(msg.channel.server._id, `bobcat.credits.balance.${msg.author._id}`)) !== null && _o !== void 0 ? _o : 0;
-            let reward = (_p = global.bobcat.database.get(msg.channel.server._id, "bobcat.credits.config.msg_reward")) !== null && _p !== void 0 ? _p : global.bobcat.config.get("bobcat.credits.server_reward");
+            let bal = (_p = global.bobcat.database.get(msg.channel.server._id, `bobcat.credits.balance.${msg.author._id}`)) !== null && _p !== void 0 ? _p : 0;
+            let reward = (_q = global.bobcat.database.get(msg.channel.server._id, "bobcat.credits.config.msg_reward")) !== null && _q !== void 0 ? _q : global.bobcat.config.get("bobcat.credits.server_reward");
             bal += reward;
             global.bobcat.database.set(msg.channel.server._id, `bobcat.credits.balance.${msg.author._id}`, bal);
         }

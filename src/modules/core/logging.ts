@@ -68,7 +68,7 @@ commands.push(new Command({
 				global.bobcat.database.set(
 					msg.channel.server._id,
 					`bobcat.config.log.${feed}`,
-					RevoltUtils.findChannel(msg.channel.server, args[3])
+					RevoltUtils.findChannel(msg.channel.server, args[3])?._id
 				);
 				break;
 			case "disable":

@@ -51,6 +51,7 @@ commands.push(new Command_1.default({
     description: "Enable/disable a log feed",
     categories: ["Configuration"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -65,7 +66,7 @@ commands.push(new Command_1.default({
         let feed = args[2].replace(/[^a-z0-9\-_]+/g, "");
         switch (args[1]) {
             case "enable":
-                global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, RevoltUtils_1.default.findChannel(msg.channel.server, args[3]));
+                global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, (_a = RevoltUtils_1.default.findChannel(msg.channel.server, args[3])) === null || _a === void 0 ? void 0 : _a._id);
                 break;
             case "disable":
                 global.bobcat.database.set(msg.channel.server._id, `bobcat.config.log.${feed}`, null);

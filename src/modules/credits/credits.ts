@@ -216,7 +216,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "credits",
-			`@${member.user.username} changed @${target.user.username}'s balance from ${oldbal.toFixed(5)} to ${bal.toFixed(5)}`,
+			`@${member.user.username} changed @${target.user?.username}'s balance from ${oldbal.toFixed(5)} to ${bal.toFixed(5)}`,
 			MONEYGREEN
 		);
 

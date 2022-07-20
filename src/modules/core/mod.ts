@@ -150,7 +150,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} warned @${target.user.username}\nComment: ${comment}`,
+			`@${member.user.username} warned @${target.user?.username}\nComment: ${comment}`,
 			global.bobcat.config.get("bobcat.colors.warning")
 		);
 
@@ -218,7 +218,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} kicked @${target.user.username}\nComment: ${comment}`,
+			`@${member.user.username} kicked @${target.user?.username}\nComment: ${comment}`,
 			global.bobcat.config.get("bobcat.colors.danger")
 		);
 
@@ -288,7 +288,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} banned @${target.user.username}\nComment: ${comment}`,
+			`@${member.user.username} banned @${target.user?.username}\nComment: ${comment}`,
 			global.bobcat.config.get("bobcat.colors.danger")
 		);
 
@@ -377,7 +377,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} tempbanned @${target.user.username}\nComment: ${comment}`,
+			`@${member.user.username} tempbanned @${target.user?.username}\nComment: ${comment}`,
 			global.bobcat.config.get("bobcat.colors.danger")
 		);
 

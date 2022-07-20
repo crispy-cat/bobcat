@@ -91,7 +91,7 @@ commands.push(new Command({
 
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} changed @${target.user.username}'s roles\n` +
+			`@${member.user.username} changed @${target.user?.username}'s roles\n` +
 				`${args[1]} role '${role.role.name}'`,
 			global.bobcat.config.get("bobcat.colors.info")
 		);

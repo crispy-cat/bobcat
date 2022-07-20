@@ -92,6 +92,7 @@ commands.push(new Command_1.default({
     description: "Warn the target user",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _e;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -121,7 +122,7 @@ commands.push(new Command_1.default({
             comment: comment
         });
         yield (yield target.user.openDM()).sendMessage(`You have been warned in **${msg.channel.server.name}**:\n${comment}`);
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} warned @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.warning"));
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} warned @${(_e = target.user) === null || _e === void 0 ? void 0 : _e.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.warning"));
         msg.reply(":white_check_mark: User has been warned.");
     })
 }));
@@ -132,6 +133,7 @@ commands.push(new Command_1.default({
     description: "Kick the target user",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _f;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -169,7 +171,7 @@ commands.push(new Command_1.default({
         });
         yield (yield target.user.openDM()).sendMessage(`You have been kicked from **${msg.channel.server.name}**:\n${comment}`);
         yield target.kick();
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} kicked @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} kicked @${(_f = target.user) === null || _f === void 0 ? void 0 : _f.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
         msg.reply(":white_check_mark: User has been kicked.");
     })
 }));
@@ -180,6 +182,7 @@ commands.push(new Command_1.default({
     description: "Ban the target user",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
+        var _g;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -219,7 +222,7 @@ commands.push(new Command_1.default({
         yield msg.channel.server.banUser(target._id.user, {
             reason: comment
         });
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} banned @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} banned @${(_g = target.user) === null || _g === void 0 ? void 0 : _g.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
         msg.reply(":white_check_mark: User has been banned.");
     })
 }));
@@ -230,7 +233,7 @@ commands.push(new Command_1.default({
     description: "Temporarily ban the target user",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _e;
+        var _h, _j;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -277,14 +280,14 @@ commands.push(new Command_1.default({
             comment: comment
         });
         yield (yield target.user.openDM()).sendMessage(`You have been temporarily banned from **${msg.channel.server.name}**:\n${comment}`);
-        let bans = (_e = global.bobcat.database.get(msg.channel.server._id, "bobcat.tempbans")) !== null && _e !== void 0 ? _e : [];
+        let bans = (_h = global.bobcat.database.get(msg.channel.server._id, "bobcat.tempbans")) !== null && _h !== void 0 ? _h : [];
         bans = bans.filter((b) => b.user != target._id.user);
         bans.push({ user: target._id.user, expires: time });
         global.bobcat.database.set(msg.channel.server._id, "bobcat.tempbans", bans);
         yield msg.channel.server.banUser(target._id.user, {
             reason: comment
         });
-        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} tempbanned @${target.user.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
+        yield global.bobcat.modfunc("core.logging", "log", msg.channel.server, "moderation", `@${member.user.username} tempbanned @${(_j = target.user) === null || _j === void 0 ? void 0 : _j.username}\nComment: ${comment}`, global.bobcat.config.get("bobcat.colors.danger"));
         msg.reply(":white_check_mark: User has been tempbanned.");
     })
 }));
@@ -338,7 +341,7 @@ commands.push(new Command_1.default({
     description: "Remove messages",
     categories: ["Moderation"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
-        var _f;
+        var _k;
         if (!(msg === null || msg === void 0 ? void 0 : msg.channel.server)) {
             if (msg)
                 msg.reply("This command must be executed in a server");
@@ -373,7 +376,7 @@ commands.push(new Command_1.default({
         });
         let deleted = 0;
         for (let message of messages) {
-            if (user && ((_f = message.author) === null || _f === void 0 ? void 0 : _f._id) != user)
+            if (user && ((_k = message.author) === null || _k === void 0 ? void 0 : _k._id) != user)
                 continue;
             yield message.delete();
             deleted++;
@@ -388,12 +391,12 @@ listeners.push(new Listener_1.default({
     obj: global.bobcat.clock,
     event: "tick",
     func: (tick) => __awaiter(void 0, void 0, void 0, function* () {
-        var _g;
+        var _l;
         if (tick % (10 * global.bobcat.clock.frequency))
             return;
         let now = Date.now();
         for (let [sid, server] of global.bobcat.client.servers) {
-            let bans = (_g = global.bobcat.database.get(sid, "bobcat.tempbans")) !== null && _g !== void 0 ? _g : [];
+            let bans = (_l = global.bobcat.database.get(sid, "bobcat.tempbans")) !== null && _l !== void 0 ? _l : [];
             let inds = [];
             for (let i in bans) {
                 let ban = bans[i];
