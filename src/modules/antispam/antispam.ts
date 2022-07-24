@@ -37,7 +37,18 @@ interface AntispamConfig {
 	max_warns: number,
 	max_kicks: number,
 	max_tempbans: number,
-	tempban_len: number
+	tempban_len: number,
+	// max messages before detected as spam
+	max_messages: number,
+	// slower cooldown but you can send more messages
+	// for a situation where let's say the spammer sends messages 
+	// just a bit slower than the max frequency
+	max_messages_slow: number,
+	// non-negative float
+	// 0 means exact consecutive delays
+	// 1 means from 0.5 to 2 the delay
+	delay_perc: number
+
 }
 
 interface AntispamRecord {
@@ -62,11 +73,20 @@ const AS_CONFIG_DEFAULTS = {
 	max_warns: 3,
 	max_kicks: 1,
 	max_tempbans: 2,
-	tempban_len: 30*60*1000
+	tempban_len: 30*60*1000,
+	max_messages: 5,
+	max_messages_slow: 15,
+	delay_perc: 0.1
 };
 
 let lastSent: {[k: string]: number} = {};
-
+// amount of consecutive messages sent faster than max_freq
+let messages_spam: number = 0;
+// amount of consecutive messages where the delay is roughly the same
+// configured by delay_perc
+let messages_slow: number = 0;
+// the delay between the last 2 messages
+let last_delay: number = 0;
 
 let functions: ModuleFunction[] = [];
 
@@ -78,9 +98,19 @@ functions.push(new ModuleFunction({
 		// is spam? not sure yet
 		let spam: boolean = false;
 
-		// if time between now and the last message sent is less than
-		// 1000 / frequency, it is spam
-		if (now - last < 1000 / config.max_freq) spam = true;
+		let delay = now - last;
+		let min_delay = 1000 / config.max_freq;
+
+		if (delay < min_delay) messages_spam++;
+		else messages_spam = 0;
+
+		if (delay > last_delay - last_delay * delay_perc &&
+			delay < last_delay + last_delay * delay_perc) 
+			messages_slow++;
+		else messages_slow = 0;
+
+		if (messages_spam > max_messages) spam = true;
+		if (messages_slow > max_messages_slow) spam = true;
 
 		// check for more than x mentions
 		let mentions: string[] = msg.content?.match(AS_REGEX_MENTION);
