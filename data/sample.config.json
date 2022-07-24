@@ -24,7 +24,8 @@
 				"core/*.js",
 				"internet/*.js",
 				"games/*.js",
-				"credits/*.js"
+				"credits/*.js",
+				"antispam/*.js"
 			]
 		},
 		"colors": {

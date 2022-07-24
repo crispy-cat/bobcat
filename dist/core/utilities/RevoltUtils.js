@@ -20,10 +20,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Logger_1 = __importDefault(require("../utilities/Logger"));
+const ParseUtils_1 = __importDefault(require("../utilities/ParseUtils"));
 class RevoltUtils {
+    static findUser(text) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let ulid = ParseUtils_1.default.parseULID(text);
+            try {
+                if (ulid)
+                    return yield global.bobcat.client.users.fetch(ulid);
+                else
+                    return [...global.bobcat.client.users.values()]
+                        .find((u) => u.username == text.replace(/^@/, ""));
+            }
+            catch (err) {
+                Logger_1.default.log(err, Logger_1.default.L_WARNING);
+                return null;
+            }
+        });
+    }
     static findMember(server, text) {
         return __awaiter(this, void 0, void 0, function* () {
-            let ulid = global.bobcat.findULID(text);
+            let ulid = ParseUtils_1.default.parseULID(text);
             try {
                 if (ulid)
                     return yield server.fetchMember(ulid);
@@ -38,7 +55,7 @@ class RevoltUtils {
         });
     }
     static findRole(server, text) {
-        let ulid = global.bobcat.findULID(text);
+        let ulid = ParseUtils_1.default.parseULID(text);
         if (ulid) {
             return {
                 id: ulid,
@@ -58,7 +75,7 @@ class RevoltUtils {
         return null;
     }
     static findChannel(server, text) {
-        let ulid = global.bobcat.findULID(text);
+        let ulid = ParseUtils_1.default.parseULID(text);
         if (ulid)
             return server.channels.find((c) => c._id == ulid);
         else

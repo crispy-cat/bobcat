@@ -239,6 +239,7 @@ commands.push(new Command({
 
 		let val;
 		switch (args[1]) {
+			case "msg_reward":
 			case "exchange_rate": {
 				val = parseFloat(args[2]);
 				if (isNaN(val)) {
@@ -249,14 +250,6 @@ commands.push(new Command({
 			}
 			case "manager_level": {
 				val = parseInt(args[2]);
-				if (isNaN(val)) {
-					msg.reply(":x: Invalid value");
-					return;
-				}
-				break;
-			}
-			case "msg_reward": {
-				val = parseFloat(args[2]);
 				if (isNaN(val)) {
 					msg.reply(":x: Invalid value");
 					return;

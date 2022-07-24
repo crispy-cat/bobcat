@@ -16,7 +16,7 @@
 	},
 	"name": "bobcat-revolt",
 	"description": "Join my server for more information and updates: https://app.revolt.chat/invite/bS4w0CWV",
-	"version": "0.0.3_f1",
+	"version": "0.0.5",
 	"main": "./dist/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"

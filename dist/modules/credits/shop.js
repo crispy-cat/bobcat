@@ -20,6 +20,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
 const Table_1 = __importDefault(require("../../core/utilities/Table"));
+const ParseUtils_1 = __importDefault(require("../../core/utilities/ParseUtils"));
 const RevoltUtils_1 = __importDefault(require("../../core/utilities/RevoltUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
@@ -155,10 +156,7 @@ commands.push(new Command_1.default({
                 "Parameters for type=role: role\n");
             return;
         }
-        let matches = args.splice(1).join(" ").matchAll(/([a-z0-9_]+)="?([^"]+?)"?(?:,|$)/gi);
-        let props = {};
-        for (let m of matches)
-            props[m[1]] = m[2];
+        let props = ParseUtils_1.default.parseProperties(args.splice(1).join(" "));
         let price = parseFloat(props.price);
         if (isNaN(price)) {
             msg.reply(":x: Invalid price");

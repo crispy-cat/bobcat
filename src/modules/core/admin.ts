@@ -9,12 +9,14 @@
 import {Message, Member} from "revolt.js";
 import {Role} from "revolt-api";
 import Logger from "../../core/utilities/Logger";
+import ParseUtils from "../../core/utilities/ParseUtils";
 import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
 import Listener from "../../core/modules/Listener";
 import ModuleFunction from "../../core/modules/ModuleFunction";
 import AccessLevel from "../../core/permissions/AccessLevel";
+import AccessControl from "../../core/permissions/AccessControl";
 
 let functions: ModuleFunction[] = [];
 
@@ -33,7 +35,7 @@ commands.push(new Command({
 			else Logger.log("This command must be executed in a server", Logger.L_WARNING);
 			return;
 		}
-		if (args.length < 3) {
+		if (args.length < 4) {
 			msg.reply(":x: Not enough arguments");
 			return;
 		}
@@ -117,47 +119,17 @@ commands.push(new Command({
 			return;
 		}
 
-		let id: string = global.bobcat.findULID(args[1]);
-
-		if (!id) {
-			for (let i in msg.channel.server.roles) {
-				let r: Role = msg.channel.server.roles[i];
-				if (r.name == args[1]) id = i;
-			}
-		}
+		let id: string = RevoltUtils.findRole(msg.channel.server, args[1]).id;
+		if (!id) id = (await RevoltUtils.findMember(msg.channel.server, args[1]))?._id.user;
 
 		if (!id) {
 			msg.reply(":x: Invalid user or role");
 			return;
 		}
 
-		let level: AccessLevel;
-		switch (args[2].toLowerCase()) {
-			case "normal":
-			case "member":
-			case "0":
-				level = AccessLevel.NORMAL;
-				break;
-
-			case "mod":
-			case "1":
-				level = AccessLevel.MOD;
-				break;
-
-			case "admin":
-			case "2":
-				level = AccessLevel.ADMIN;
-				break;
-
-			case "owner":
-			case "3":
-				level = AccessLevel.OWNER;
-				break;
-
-			default:
-				msg.reply(":x: Invalid access level");
-				return;
-		}
+		let level: AccessLevel = AccessControl.alFromText(
+			args[2], AccessLevel.NORMAL, AccessLevel.OWNER
+		);
 
 		global.bobcat.database.set(
 			msg.channel.server._id,

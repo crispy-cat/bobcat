@@ -30,9 +30,9 @@ export default class Bobcat {
 
 	public constructor(root: string) {
 		this.root = root;
-		this.config = new Config(root + "/config.json");
+		this.config = new Config(root + "/data/config.json");
 		this.client = new Client();
-		this.database = new Database(root + "/bobcat.db");
+		this.database = new Database(root + "/data/bobcat.db");
 		this.clock = new Clock();
 		this.rl = readline.createInterface({
 			input: process.stdin,
@@ -181,11 +181,6 @@ export default class Bobcat {
 		}
 
 		return await func.exec(...args);
-	}
-
-	public findULID(str: string): string {
-		if (!str) return null;
-		return str.match(/[0-9A-HJKMNP-TV-Z]{26}/)?.[0];
 	}
 
 	public getPrefix(server?: Server): string {

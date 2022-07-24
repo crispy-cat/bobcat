@@ -10,6 +10,7 @@ import {Message, User, Permission, Server, Member} from "revolt.js";
 import Logger from "../../core/utilities/Logger";
 import Table from "../../core/utilities/Table";
 import Format from "../../core/utilities/Format";
+import ParseUtils from "../../core/utilities/ParseUtils";
 import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
@@ -62,20 +63,21 @@ commands.push(new Command({
 		}
 
 		let member: Member = msg.member;
-		let target: Member = await RevoltUtils.findMember(msg.channel.server, args[1]);
-		let tid: string;
-		if (target) {
-			if (member.inferiorTo(target) && msg.author._id != msg.channel.server.owner) {
+		let target: User = await RevoltUtils.findUser(args[1]);
+		if (!target) {
+			msg.reply(":x: Invalid target");
+			return;
+		}
+		let mtarget: Member = await RevoltUtils.findMember(msg.channel.server, args[1]);
+		if (mtarget) {
+			if (member.inferiorTo(mtarget) && msg.author._id != msg.channel.server.owner) {
 				msg.reply(":x: You do not have permission to view that user's record");
 				return;
 			}
-			tid = target.user._id;
-		} else {
-			tid = global.bobcat.findULID(args[1]);
 		}
 
 		let records: ModerationRecord[] = global.bobcat.database.get(
-			msg.channel.server._id, "bobcat.moderation.record." + tid
+			msg.channel.server._id, "bobcat.moderation.record." + target._id
 		) ?? [];
 		if (!records.length) {
 			msg.reply("That user has no moderation record.");
@@ -89,13 +91,13 @@ commands.push(new Command({
 				+ind + 1,
 				(await global.bobcat.client.users.fetch(entry.moderator)).username,
 				entry.action,
-				Format.datetime(new Date(entry.timestamp * 1000)),
+				Format.datetime(new Date(entry.timestamp)),
 				entry.comment
 			])
 		}
 
 		msg.reply(
-			`**${"@" + target?.user?.username ?? `<@${tid}>`}'s Moderation Record**\n` +
+			`**@${target.username}'s Moderation Record**\n` +
 			table.toString()
 		);
 	}
@@ -132,29 +134,34 @@ commands.push(new Command({
 
 		let comment: string = args.splice(2).join(" ");
 
-		global.bobcat.modfunc(
-			"core.mod", "addModerationRecord",
-			msg.channel.server._id,
-			target._id.user,
-			{
-				moderator: member._id.user,
-				action: "Warning",
-				timestamp: Date.now() / 1000,
-				comment: comment
-			}
-		);
+		try {
+			await global.bobcat.modfunc(
+				"core.mod", "addModerationRecord",
+				msg.channel.server._id,
+				target._id.user,
+				{
+					moderator: member._id.user,
+					action: "Warning",
+					timestamp: Date.now(),
+					comment: comment
+				}
+			);
 
-		await (await target.user.openDM()).sendMessage(
-			`You have been warned in **${msg.channel.server.name}**:\n${comment}`
-		);
+			await global.bobcat.modfunc(
+				"core.logging", "log", msg.channel.server, "moderation",
+				`@${member.user.username} warned @${target.user?.username}\nComment: ${comment}`,
+				global.bobcat.config.get("bobcat.colors.warning")
+			);
 
-		await global.bobcat.modfunc(
-			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} warned @${target.user?.username}\nComment: ${comment}`,
-			global.bobcat.config.get("bobcat.colors.warning")
-		);
+			await (await target.user.openDM()).sendMessage(
+				`You have been warned in **${msg.channel.server.name}**:\n${comment}`
+			);
 
-		msg.reply(":white_check_mark: User has been warned.");
+			msg.reply(":white_check_mark: User has been warned.");
+		} catch (err) {
+			Logger.log(err, Logger.L_WARNING);
+			msg.reply(":x: Target could not be kicked.");
+		}
 	}
 }));
 
@@ -198,31 +205,36 @@ commands.push(new Command({
 
 		let comment: string = (args.length > 2) ? args.splice(2).join(" ") : "No comment";
 
-		global.bobcat.modfunc(
-			"core.mod", "addModerationRecord",
-			msg.channel.server._id,
-			target._id.user,
-			{
-				moderator: member._id.user,
-				action: "Kick",
-				timestamp: Date.now() / 1000,
-				comment: comment
-			}
-		);
+		try {
+			await target.kick();
 
-		await (await target.user.openDM()).sendMessage(
-			`You have been kicked from **${msg.channel.server.name}**:\n${comment}`
-		);
+			await global.bobcat.modfunc(
+				"core.mod", "addModerationRecord",
+				msg.channel.server._id,
+				target._id.user,
+				{
+					moderator: member._id.user,
+					action: "Kick",
+					timestamp: Date.now(),
+					comment: comment
+				}
+			);
 
-		await target.kick();
+			await global.bobcat.modfunc(
+				"core.logging", "log", msg.channel.server, "moderation",
+				`@${member.user.username} kicked @${target.user?.username}\nComment: ${comment}`,
+				global.bobcat.config.get("bobcat.colors.danger")
+			);
 
-		await global.bobcat.modfunc(
-			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} kicked @${target.user?.username}\nComment: ${comment}`,
-			global.bobcat.config.get("bobcat.colors.danger")
-		);
+			await (await target.user.openDM()).sendMessage(
+				`You have been kicked from **${msg.channel.server.name}**:\n${comment}`
+			);
 
-		msg.reply(":white_check_mark: User has been kicked.");
+			msg.reply(":white_check_mark: User has been kicked.");
+		} catch (err) {
+			Logger.log(err, Logger.L_WARNING);
+			msg.reply(":x: Target could not be kicked.");
+		}
 	}
 }));
 
@@ -266,33 +278,38 @@ commands.push(new Command({
 
 		let comment: string = (args.length > 2) ? args.splice(2).join(" ") : "No comment";
 
-		global.bobcat.modfunc(
-			"core.mod", "addModerationRecord",
-			msg.channel.server._id,
-			target._id.user,
-			{
-				moderator: member._id.user,
-				action: "Ban",
-				timestamp: Date.now() / 1000,
-				comment: comment
-			}
-		);
+		try {
+			await msg.channel.server.banUser(target._id.user, {
+				reason: comment
+			});
 
-		await (await target.user.openDM()).sendMessage(
-			`You have been banned from **${msg.channel.server.name}**:\n${comment}`
-		);
+			await global.bobcat.modfunc(
+				"core.mod", "addModerationRecord",
+				msg.channel.server._id,
+				target._id.user,
+				{
+					moderator: member._id.user,
+					action: "Ban",
+					timestamp: Date.now(),
+					comment: comment
+				}
+			);
 
-		await msg.channel.server.banUser(target._id.user, {
-			reason: comment
-		});
+			await global.bobcat.modfunc(
+				"core.logging", "log", msg.channel.server, "moderation",
+				`@${member.user.username} banned @${target.user?.username}\nComment: ${comment}`,
+				global.bobcat.config.get("bobcat.colors.danger")
+			);
 
-		await global.bobcat.modfunc(
-			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} banned @${target.user?.username}\nComment: ${comment}`,
-			global.bobcat.config.get("bobcat.colors.danger")
-		);
+			await (await target.user.openDM()).sendMessage(
+				`You have been banned from **${msg.channel.server.name}**:\n${comment}`
+			);
 
-		msg.reply(":white_check_mark: User has been banned.");
+			msg.reply(":white_check_mark: User has been banned.");
+		} catch (err) {
+			Logger.log(err, Logger.L_WARNING);
+			msg.reply(":x: Target could not be banned.");
+		}
 	}
 }));
 
@@ -334,34 +351,11 @@ commands.push(new Command({
 			return;
 		}
 
-		let time: number = Date.now();
-		let match: string[] = args[2].match(/^(?:(\d+)d?)?(?:(\d+)h?)?(?:(\d+)m?)?$/i);
-		let h: number = parseInt(match[1]);
-		let m: number = parseInt(match[2]);
-		let s: number = parseInt(match[3]);
-		time += ((!isNaN(h)) ? h : 0) * 24*60*60*1000;
-		time += ((!isNaN(m)) ? m : 0) * 60*60*1000;
-		time += ((!isNaN(s)) ? s : 0) * 60*1000;
-		let timef:  string = Format.datetime(new Date(time));
+		let time: number = Date.now() + ParseUtils.time(args[2]);
+		let timef: string = Format.datetime(new Date(time));
 
 		let comment: string = (args.length > 3) ? args.splice(3).join(" ") : "No comment";
-		comment = `**Banned until ${timef}**\n${comment}`;
-
-		global.bobcat.modfunc(
-			"core.mod", "addModerationRecord",
-			msg.channel.server._id,
-			target._id.user,
-			{
-				moderator: member._id.user,
-				action: "Tempban",
-				timestamp: Date.now() / 1000,
-				comment: comment
-			}
-		);
-
-		await (await target.user.openDM()).sendMessage(
-			`You have been temporarily banned from **${msg.channel.server.name}**:\n${comment}`
-		);
+		comment = `**Banned until ${timef}**: ${comment}`;
 
 		let bans: TemporaryBan[] = global.bobcat.database.get(
 			msg.channel.server._id,
@@ -371,17 +365,38 @@ commands.push(new Command({
 		bans.push({user: target._id.user, expires: time});
 		global.bobcat.database.set(msg.channel.server._id, "bobcat.tempbans", bans);
 
-		await msg.channel.server.banUser(target._id.user, {
-			reason: comment
-		});
+		try {
+			await msg.channel.server.banUser(target._id.user, {
+				reason: comment
+			});
 
-		await global.bobcat.modfunc(
-			"core.logging", "log", msg.channel.server, "moderation",
-			`@${member.user.username} tempbanned @${target.user?.username}\nComment: ${comment}`,
-			global.bobcat.config.get("bobcat.colors.danger")
-		);
+			await global.bobcat.modfunc(
+				"core.mod", "addModerationRecord",
+				msg.channel.server._id,
+				target._id.user,
+				{
+					moderator: member._id.user,
+					action: "Tempban",
+					timestamp: Date.now(),
+					comment: comment
+				}
+			);
 
-		msg.reply(":white_check_mark: User has been tempbanned.");
+			await global.bobcat.modfunc(
+				"core.logging", "log", msg.channel.server, "moderation",
+				`@${member.user.username} tempbanned @${target.user?.username}\nComment: ${comment}`,
+				global.bobcat.config.get("bobcat.colors.danger")
+			);
+
+			await (await target.user.openDM()).sendMessage(
+				`You have been temporarily banned from **${msg.channel.server.name}**:\n${comment}`
+			);
+
+			msg.reply(":white_check_mark: User has been tempbanned.");
+		} catch (err) {
+			Logger.log(err, Logger.L_WARNING);
+			msg.reply(":x: Target could not be tempbanned.");
+		}
 	}
 }));
 
@@ -403,7 +418,6 @@ commands.push(new Command({
 			return;
 		}
 
-		let tid: string = global.bobcat.findULID(args[1]);
 		let member: Member = msg.member;
 		if (
 			!member.hasPermission(msg.channel.server, "BanMembers") &&
@@ -413,25 +427,30 @@ commands.push(new Command({
 			return;
 		}
 
+		let target: User = await RevoltUtils.findUser(args[1]);
+		if (!target) {
+			msg.reply(":x: Invalid target");
+			return;
+		}
+
 		let comment: string = (args.length > 2) ? args.splice(2).join(" ") : "No comment";
 
-		global.bobcat.modfunc(
-			"core.mod", "addModerationRecord",
-			msg.channel.server._id,
-			tid,
-			{
-				moderator: member._id.user,
-				action: "Unban",
-				timestamp: Date.now() / 1000,
-				comment: comment
-			}
-		);
-
 		try {
-			await msg.channel.server.unbanUser(tid);
+			await msg.channel.server.unbanUser(target._id);
+			await global.bobcat.modfunc(
+				"core.mod", "addModerationRecord",
+				msg.channel.server._id,
+				target._id,
+				{
+					moderator: member._id.user,
+					action: "Unban",
+					timestamp: Date.now(),
+					comment: comment
+				}
+			);
 			await global.bobcat.modfunc(
 				"core.logging", "log", msg.channel.server, "moderation",
-				`@${member.user.username} unbanned <@${tid}>\nComment: ${comment}`,
+				`@${member.user.username} unbanned <@${target._id}>\nComment: ${comment}`,
 				global.bobcat.config.get("bobcat.colors.info")
 			);
 			msg.reply(":white_check_mark: User has been unbanned.");
@@ -472,10 +491,10 @@ commands.push(new Command({
 		let user: string = null;
 		let num: number = Infinity;
 		if (args.length > 2) {
-			user = global.bobcat.findULID(args[1]);
+			user = ParseUtils.parseULID(args[1]);
 			num = +args[2];
 		} else if (isNaN(+args[1])) {
-			user = global.bobcat.findULID(args[1]);
+			user = ParseUtils.parseULID(args[1]);
 		} else {
 			num = +args[1];
 		}
@@ -499,6 +518,39 @@ commands.push(new Command({
 		);
 
 		msg.reply(`:white_check_mark: Deleted ${deleted} messages`);
+	}
+}));
+
+commands.push(new Command({
+	names:		["mod:clear", "clearrecord", "clearinfractions"],
+	args:		["<target>"],
+	accessLevel:AccessLevel.ADMIN,
+	description: "Clear the target user's moderation record",
+	categories:	["Moderation"],
+	func:		async (args: string[], msg: Message): Promise<void> => {
+		if (!msg?.channel.server) {
+			if (msg) msg.reply("This command must be executed in a server");
+			else Logger.log("This command must be executed in a server", Logger.L_WARNING);
+			return;
+		}
+
+		let member: Member = msg.member;
+		let target: User = await RevoltUtils.findUser(args[1]);
+		let mtarget: Member = await RevoltUtils.findMember(msg.channel.server, args[1]);
+		if (mtarget) {
+			if (member.inferiorTo(mtarget) && msg.author._id != msg.channel.server.owner) {
+				msg.reply(":x: You do not have permission to clear that user's record");
+				return;
+			}
+		}
+
+		global.bobcat.database.set(
+			msg.channel.server._id,
+			`bobcat.moderation.record.${target._id}`,
+			[]
+		);
+
+		msg.reply(":white_check_mark: Record cleared");
 	}
 }));
 

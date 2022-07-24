@@ -7,13 +7,14 @@
 */
 
 const enum AccessLevel {
-	BOTBAN	=-1,
-	NORMAL	= 0,
-	MOD		= 1,
-	ADMIN	= 2,
-	OWNER	= 3,
-	BOT_ADMIN=4,
-	BOT_OWNER=5
+	INVALID	  = -128,
+	BOTBAN	  = -1,
+	NORMAL	  =  0,
+	MOD		  =  1,
+	ADMIN	  =  2,
+	OWNER	  =  3,
+	BOT_ADMIN =  4,
+	BOT_OWNER =  5
 }
 
 export default AccessLevel;

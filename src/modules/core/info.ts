@@ -173,7 +173,7 @@ listeners.push(new Listener({
 			}
 		});
 	}
-}))
+}));
 
 
 export = new Module({

@@ -55,9 +55,9 @@ class Bobcat {
     constructor(root) {
         this._modules = [];
         this.root = root;
-        this.config = new Config_1.default(root + "/config.json");
+        this.config = new Config_1.default(root + "/data/config.json");
         this.client = new revolt_js_1.Client();
-        this.database = new Database_1.default(root + "/bobcat.db");
+        this.database = new Database_1.default(root + "/data/bobcat.db");
         this.clock = new Clock_1.Clock();
         this.rl = readline.createInterface({
             input: process.stdin,
@@ -199,12 +199,6 @@ class Bobcat {
             }
             return yield func.exec(...args);
         });
-    }
-    findULID(str) {
-        var _a;
-        if (!str)
-            return null;
-        return (_a = str.match(/[0-9A-HJKMNP-TV-Z]{26}/)) === null || _a === void 0 ? void 0 : _a[0];
     }
     getPrefix(server) {
         var _a, _b, _c;

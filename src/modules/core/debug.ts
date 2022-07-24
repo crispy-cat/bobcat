@@ -13,6 +13,7 @@ import {decodeTime} from "ulid";
 import {Clock} from "../../core/app/Clock";
 import Logger from "../../core/utilities/Logger";
 import Format from "../../core/utilities/Format";
+import ParseUtils from "../../core/utilities/ParseUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
 import Listener from "../../core/modules/Listener";
@@ -200,7 +201,7 @@ commands.push(new Command({
 	description:"Shows ULID information",
 	categories:	["Debug"],
 	func:		async (args: string[], msg: Message): Promise<void> => {
-		let ulid: string = global.bobcat.findULID(args[1] ?? "");
+		let ulid: string = ParseUtils.parseULID(args[1] ?? "");
 		if (!ulid) {
 			if (msg) msg.reply("Invalid ULID");
 			else Logger.log("Invalid ULID", Logger.L_WARNING);

@@ -23,6 +23,7 @@ const crypto_1 = __importDefault(require("crypto"));
 const ulid_1 = require("ulid");
 const Logger_1 = __importDefault(require("../../core/utilities/Logger"));
 const Format_1 = __importDefault(require("../../core/utilities/Format"));
+const ParseUtils_1 = __importDefault(require("../../core/utilities/ParseUtils"));
 const Module_1 = __importDefault(require("../../core/modules/Module"));
 const Command_1 = __importDefault(require("../../core/modules/Command"));
 let functions = [];
@@ -208,7 +209,7 @@ commands.push(new Command_1.default({
     categories: ["Debug"],
     func: (args, msg) => __awaiter(void 0, void 0, void 0, function* () {
         var _l;
-        let ulid = global.bobcat.findULID((_l = args[1]) !== null && _l !== void 0 ? _l : "");
+        let ulid = ParseUtils_1.default.parseULID((_l = args[1]) !== null && _l !== void 0 ? _l : "");
         if (!ulid) {
             if (msg)
                 msg.reply("Invalid ULID");

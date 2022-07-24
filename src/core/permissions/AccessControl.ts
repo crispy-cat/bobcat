@@ -33,7 +33,7 @@ export default class AccessControl {
 		if (mods.includes(user._id)) return AccessLevel.MOD;
 
 		let highest: AccessLevel = AccessLevel.NORMAL;
-		for (let id of [user._id, ...(member.roles || [])]) {
+		for (let id of [user._id, ...(member.roles ?? [])]) {
 			highest = Math.min(AccessLevel.OWNER, Math.max(highest,
 				global.bobcat.database.get(server._id, `bobcat.config.access.${id}`) ?? AccessLevel.NORMAL));
 		}
@@ -58,7 +58,59 @@ export default class AccessControl {
 			case AccessLevel.BOT_OWNER:
 				return "Bot Owner";
 			default:
-				return "Access Level " + level;
+				return "Invalid Access Level " + level;
 		}
+	}
+
+	public static alFromText(text: string, min?: AccessLevel, max?: AccessLevel): AccessLevel {
+		let level: AccessLevel;
+		switch (text.toLowerCase()) {
+			case "mod":
+			case "1":
+				level = AccessLevel.MOD;
+				break;
+
+			case "admin":
+			case "2":
+				level = AccessLevel.ADMIN;
+				break;
+
+			case "owner":
+			case "3":
+				level = AccessLevel.OWNER;
+				break;
+
+			case "botadmin":
+			case "bot_admin":
+			case "4":
+				level = AccessLevel.BOT_ADMIN;
+				break;
+
+			case "botowner":
+			case "bot_owner":
+			case "5":
+				level = AccessLevel.BOT_OWNER;
+				break;
+
+			case "botban":
+			case "bot_ban":
+			case "-1":
+				level = AccessLevel.BOTBAN;
+				break;
+
+			case "normal":
+			case "member":
+			case "0":
+				level = AccessLevel.NORMAL;
+				break;
+
+			default:
+				return AccessLevel.INVALID;
+		}
+
+		return Math.min(
+			Math.max(level, min ?? AccessLevel.BOTBAN),
+			max ?? AccessLevel.BOT_OWNER
+		);
 	}
 }

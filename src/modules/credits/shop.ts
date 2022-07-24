@@ -10,6 +10,7 @@ import {Message, Member} from "revolt.js";
 import {Role} from "revolt-api";
 import Logger from "../../core/utilities/Logger";
 import Table from "../../core/utilities/Table";
+import ParseUtils from "../../core/utilities/ParseUtils";
 import RevoltUtils from "../../core/utilities/RevoltUtils";
 import Module from "../../core/modules/Module";
 import Command from "../../core/modules/Command";
@@ -188,9 +189,7 @@ commands.push(new Command({
 			return;
 		}
 
-		let matches = args.splice(1).join(" ").matchAll(/([a-z0-9_]+)="?([^"]+?)"?(?:,|$)/gi);
-		let props: {[k: string]: string} = {};
-		for (let m of matches) props[m[1]] = m[2];
+		let props: {[k: string]: string} = ParseUtils.parseProperties(args.splice(1).join(" "));
 
 		let price: number = parseFloat(props.price);
 		if (isNaN(price)) {

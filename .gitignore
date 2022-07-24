@@ -1,4 +1,4 @@
 node_modules
 .env
-bobcat.db
-config.json
+data/*
+!data/sample.config.json
