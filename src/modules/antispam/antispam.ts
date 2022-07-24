@@ -75,29 +75,40 @@ functions.push(new ModuleFunction({
 	func:	async (
 		msg: Message, now: number, last: number, config: AntispamConfig
 	): Promise<void> => {
+		// is spam? not sure yet
 		let spam: boolean = false;
 
+		// if time between now and the last message sent is less than
+		// 1000 / frequency, it is spam
 		if (now - last < 1000 / config.max_freq) spam = true;
 
+		// check for more than x mentions
 		let mentions: string[] = msg.content?.match(AS_REGEX_MENTION);
 		if (mentions && mentions.length > config.max_mentions) spam = true;
 
+		// check for more than x links
 		let links: string[] = msg.content?.match(AS_REGEX_LINK);
 		if (links && links.length > config.max_links) spam = true;
 
+		// if it's not spam, return
 		if (!spam) return;
+		// delete the message
 		if (config.del_msgs) msg.delete();
 
+		// initialize the action to none (should change to an enum maybe)
 		let action: "warn"|"kick"|"tempban"|"ban"|"none" = "none";
+		// get the user's antispam record for the server
 		let record: AntispamRecord = global.bobcat.database.get(
 			msg.channel.server._id,
 			`bobcat.antispam.record.${msg.author._id}`
 		) ?? {none: 0, warn: 0, kick: 0, tempban: 0};
+		// if more than x tempbans, ban, if more than x kicks, tempban, ...
 		if (record.tempban >= config.max_tempbans) action = "ban";
 		else if (record.kick >= config.max_kicks) action = "tempban";
 		else if (record.warn >= config.max_warns) action = "kick";
 		else if (record.none >= config.max_noaction) action = "warn";
 
+		// execute the action
 		switch (action) {
 			case "warn": {
 				record.warn++;
@@ -109,16 +120,21 @@ functions.push(new ModuleFunction({
 				break;
 			}
 			case "tempban": {
+				// get the tempban list for the server
 				let bans: TemporaryBan[] = global.bobcat.database.get(
 					msg.channel.server._id,
 					"bobcat.tempbans"
 				) ?? [];
+				// delete the user's old tempban and push the new one
 				bans = bans.filter((b: TemporaryBan): boolean => b.user != msg.author._id);
 				bans.push({user: msg.author._id, expires: now + config.tempban_len});
+				// set the tempban list
 				global.bobcat.database.set(msg.channel.server._id, "bobcat.tempbans", bans);
+				// actually ban the user
 				await msg.channel.server.banUser(msg.author._id, {
 					reason: `Antispam Tempban ID: ${msg.channel._id}/${msg._id}`
 				});
+				// increment the tempbans on record
 				record.tempban++;
 				break;
 			}
@@ -134,14 +150,17 @@ functions.push(new ModuleFunction({
 			}
 		}
 
+		// set the user's antispam record
 		global.bobcat.database.set(
 			msg.channel.server._id,
 			`bobcat.antispam.record.${msg.author._id}`,
 			record
 		);
 
+		// if no action taken, return
 		if (action == "none") return;
 
+		// add to the user's moderation record
 		await global.bobcat.modfunc(
 			"core.mod", "addModerationRecord",
 			msg.channel.server._id,
@@ -154,6 +173,7 @@ functions.push(new ModuleFunction({
 			}
 		);
 
+		// send to the logger
 		await global.bobcat.modfunc(
 			"core.logging", "log", msg.channel.server, "antispam",
 			`@${msg.author.username} triggered the spam filter\n` +
@@ -161,6 +181,7 @@ functions.push(new ModuleFunction({
 			global.bobcat.config.get("bobcat.colors.warning")
 		);
 
+		// dm the user
 		await (await msg.author.openDM()).sendMessage(
 			"You have triggered the spam filter\n" +
 			`Action taken: ${action}\nID:\`${msg.channel._id}/${msg._id}\`\n` +
@@ -168,6 +189,8 @@ functions.push(new ModuleFunction({
 		);
 	}
 }));
+
+// start commands
 
 
 let commands: Command[] = [];
@@ -386,6 +409,8 @@ commands.push(new Command({
 }));
 
 
+// end commands
+
 let listeners: Listener[] = [];
 
 listeners.push(new Listener({
@@ -393,18 +418,23 @@ listeners.push(new Listener({
 	obj:	global.bobcat.client,
 	event:	"message",
 	func:	async (msg: Message): Promise<void> => {
+		// if not in a server, return
 		if (!msg.channel.server) return;
 
+		// if not enabled, return
 		let enabled: boolean = global.bobcat.database.get(
 			msg.channel.server._id,
 			"bobcat.antispam.config.enabled"
 		);
 		if (!enabled) return;
 
+		// get the current time, time of last message sent by the user and
+		// set the last message time to now
 		let now: number = Date.now();
 		let last: number = lastSent[msg.author._id] ?? 0;
 		lastSent[msg.author._id] = now;
 
+		// get the antispam configuration
 		let config: AntispamConfig = AS_CONFIG_DEFAULTS;
 		for (let key of Object.keys(AS_CONFIG_DEFAULTS)) {
 			let val: any = global.bobcat.database.get(
@@ -414,14 +444,18 @@ listeners.push(new Listener({
 			if (val !== undefined && val !== null) config[key] = val;
 		}
 
+		// check that the message channel, author and author's roles are not
+		// in the whitelist
 		if (config.whitelist.includes(msg.channel._id)) return;
 		if (config.whitelist.includes(msg.author._id)) return;
 		for (let id of (msg.member?.roles ?? []))
 			if (config.whitelist.includes(id)) return;
 
+		// check that the user's access level is not whitelisted
 		let al: AccessLevel = await AccessControl.getAccessLevel(msg.channel.server, msg.author);
 		if (al >= config.wl_level) return;
 
+		// execute the spam check function
 		await global.bobcat.modfunc(
 			"antispam.antispam", "checkspam",
 			msg, now, last, config
